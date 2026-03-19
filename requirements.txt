@@ -1,0 +1,11 @@
+openai-whisper
+numpy<2.0.0
+torch>=2.0.0
+torchaudio>=2.0.0
+yt-dlp>=2025.10.22
+pytubefix>=6.0.0
+# openvino>=2023.3.0 # May have issues on Python 3.13
+# openvino-dev>=2023.3.0
+onnx>=1.14.0
+onnxruntime>=1.16.0
+# optimum[openvino]>=1.14.0

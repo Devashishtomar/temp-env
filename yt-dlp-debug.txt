@@ -1,0 +1,32 @@
+[debug] Command-line config: ['-v', '-f', 'bestaudio', '--extract-audio', '--audio-format', 'wav', '-o', '/root/yt-shorts-generator/uploads/9bb90e8e-9305-4ff3-a79f-9363b632abaf/temp_audio.%(ext)s', 'https://www.youtube.com/watch?v=-moW9jvvMr4']
+[debug] Encodings: locale UTF-8, fs utf-8, pref UTF-8, out utf-8 (No ANSI), error utf-8 (No ANSI), screen utf-8 (No ANSI)
+[debug] yt-dlp version stable@2025.07.21 from yt-dlp/yt-dlp [9951fdd0d] (zip)
+[debug] Python 3.12.3 (CPython x86_64 64bit) - Linux-6.8.0-62-generic-x86_64-with-glibc2.39 (OpenSSL 3.0.13 30 Jan 2024, glibc 2.39)
+[debug] exe versions: ffmpeg 6.1.1 (setts), ffprobe 6.1.1
+[debug] Optional libraries: certifi-2023.11.17, requests-2.31.0 (unsupported), sqlite3-3.45.1, urllib3-2.0.7
+[debug] Proxy map: {}
+[debug] Request Handlers: urllib
+[debug] Plugin directories: none
+[debug] Loaded 1857 extractors
+[debug] [youtube] [pot] PO Token Providers: none
+[debug] [youtube] [pot] PO Token Cache Providers: memory
+[debug] [youtube] [pot] PO Token Cache Spec Providers: webpo
+[youtube] Extracting URL: https://www.youtube.com/watch?v=-moW9jvvMr4
+[youtube] -moW9jvvMr4: Downloading webpage
+[youtube] -moW9jvvMr4: Downloading tv client config
+[youtube] -moW9jvvMr4: Downloading player 4f8fa943-main
+[debug] Saving youtube-sts.4f8fa943-main to cache
+[youtube] -moW9jvvMr4: Downloading tv player API JSON
+[debug] [youtube] -moW9jvvMr4: tv player response playability status: ERROR
+[youtube] -moW9jvvMr4: Downloading ios player API JSON
+[debug] [youtube] -moW9jvvMr4: ios player response playability status: LOGIN_REQUIRED
+[debug] [youtube] -moW9jvvMr4: web player response playability status: ERROR
+ERROR: [youtube] -moW9jvvMr4: The following content is not available on this app.. Watch on the latest version of YouTube.
+  File "/usr/local/bin/yt-dlp/yt_dlp/extractor/common.py", line 761, in extract
+    ie_result = self._real_extract(url)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/bin/yt-dlp/yt_dlp/extractor/youtube/_video.py", line 3930, in _real_extract
+    self.raise_no_formats(reason, expected=True)
+  File "/usr/local/bin/yt-dlp/yt_dlp/extractor/common.py", line 1273, in raise_no_formats
+    raise ExtractorError(msg, expected=expected, video_id=video_id)
+
