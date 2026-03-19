@@ -36,15 +36,26 @@ export async function POST(request: NextRequest) {
     try {
       // Check if user already exists
       const existingUser = await client.query(
-        'SELECT id FROM users WHERE email = $1',
+        'SELECT id, password FROM users WHERE email = $1',
         [email.toLowerCase()]
       );
 
       if (existingUser.rows.length > 0) {
-        return NextResponse.json(
-          { error: 'User with this email already exists' },
-          { status: 409 }
-        );
+        const user = existingUser.rows[0];
+
+        // If they exist but have no password, they are a Google user
+        if (!user.password) {
+          return NextResponse.json(
+            { error: 'An account with this email was created using Google Sign-In. Please click "Continue with Google" to log in.' },
+            { status: 409 }
+          );
+        } else {
+          // If they have a password, they are a standard user
+          return NextResponse.json(
+            { error: 'An account with this email already exists. Please log in with your password.' },
+            { status: 409 }
+          );
+        }
       }
 
       // Hash password
