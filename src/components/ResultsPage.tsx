@@ -1094,16 +1094,6 @@ export default function ResultsPage({ results, onBack }: ResultsPageProps) {
                       whiteSpace: "pre-line",
                       textAlign: "center",
                       maxWidth: "90%",
-                      animation:
-                        videoEdits[showVideoEditor]?.subtitleStyle?.animation === "fade in"
-                          ? "fadeIn 1s"
-                          : videoEdits[showVideoEditor]?.subtitleStyle?.animation === "slide up"
-                            ? "slideUp 1s"
-                            : videoEdits[showVideoEditor]?.subtitleStyle?.animation === "pop in"
-                              ? "popIn 0.7s"
-                              : videoEdits[showVideoEditor]?.subtitleStyle?.animation === "bounce"
-                                ? "bounce 1s"
-                                : "none",
                       zIndex: 10,
                     }}
                     onMouseDown={(e) => { if (showVideoEditor !== null) handleDragStart(e, showVideoEditor); }}
@@ -1129,7 +1119,7 @@ export default function ResultsPage({ results, onBack }: ResultsPageProps) {
                   </button>
                 </div>
 
-                <div className="space-y-4 max-h-[300px] overflow-y-auto">
+                <div className="space-y-4 max-h-[450px] overflow-y-auto">
                   {(subtitles[showVideoEditor] || []).length === 0 ? (
                     <p className="text-gray-500 text-sm text-center py-4">
                       No subtitles added. Click &quot;Add Subtitle&quot; to create one.
@@ -1289,36 +1279,6 @@ export default function ResultsPage({ results, onBack }: ResultsPageProps) {
                       Italic
                     </button>
                   </div>
-                </div>
-              </div>
-
-              {/* Animations Section */}
-              <div className="bg-gray-100 rounded-xl p-4">
-                <h3 className="text-lg font-semibold text-[#222] mb-4">Animations</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {["Fade In", "Slide Up", "Pop In", "Bounce"].map((animation) => (
-                    <button
-                      key={animation}
-                      className={`px-4 py-2 rounded-lg border ${videoEdits[showVideoEditor]?.subtitleStyle?.animation === animation.toLowerCase()
-                        ? "bg-[#7b2ff2] text-white"
-                        : "border-gray-400 text-[#222] bg-white"
-                        } transition`}
-                      onClick={() =>
-                        handleVideoEdit(showVideoEditor, {
-                          ...videoEdits[showVideoEditor],
-                          subtitleStyle: {
-                            ...videoEdits[showVideoEditor]?.subtitleStyle,
-                            animation:
-                              videoEdits[showVideoEditor]?.subtitleStyle?.animation === animation.toLowerCase()
-                                ? "none"
-                                : animation.toLowerCase(),
-                          },
-                        })
-                      }
-                    >
-                      {animation}
-                    </button>
-                  ))}
                 </div>
               </div>
 
