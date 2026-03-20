@@ -682,11 +682,11 @@ async function cycleWarpConnection(): Promise<boolean> {
   try {
     await execAsync('warp-cli disconnect');
     console.log('[WARP] Disconnected. Waiting 2 seconds...');
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     await execAsync('warp-cli connect');
-    console.log('[WARP] Connected. Waiting 4 seconds for tunnel to establish...');
-    await new Promise(resolve => setTimeout(resolve, 4000));
+    console.log('[WARP] Connected. Waiting 10 seconds for tunnel to establish...');
+    await new Promise(resolve => setTimeout(resolve, 10000));
 
     console.log('[WARP] Successfully cycled connection. Fresh IP ready.');
     return true;

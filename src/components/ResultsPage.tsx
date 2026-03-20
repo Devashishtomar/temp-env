@@ -1038,426 +1038,426 @@ export default function ResultsPage({ results, onBack }: ResultsPageProps) {
             </div>
           ))}
         </div>
+      </div>
 
-        {/* Video editor modal */}
-        {showVideoEditor !== null && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm">
-            <div
-              className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto flex flex-row relative"
-              style={{ minHeight: 600 }}
+      {/* Video editor modal */}
+      {showVideoEditor !== null && (
+        <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm">
+          <div
+            className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-6xl max-h-[90vh] overflow-y-auto flex flex-row relative"
+            style={{ minHeight: 600 }}
+          >
+            <button
+              onClick={handleVideoEditorClose}
+              className="absolute top-4 right-4 p-2 bg-gray-200 rounded-full hover:bg-gray-300 z-50"
             >
-              <button
-                onClick={handleVideoEditorClose}
-                className="absolute top-4 right-4 p-2 bg-gray-200 rounded-full hover:bg-gray-300 z-50"
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="flex-1 flex flex-col items-center justify-center pr-8">
+              <div
+                ref={containerRef}
+                className="relative w-full max-w-[420px] aspect-[9/16] bg-black rounded-3xl overflow-hidden shadow-xl mb-4 flex items-center justify-center"
+                style={{ touchAction: "none" }}
+                onMouseMove={(e) => { if (showVideoEditor !== null) handleDragMove(e, showVideoEditor); }}
+                onMouseUp={handleDragEnd}
+                onMouseLeave={handleDragEnd}
+                onTouchMove={(e) => { if (showVideoEditor !== null) handleDragMove(e, showVideoEditor); }}
+                onTouchEnd={handleDragEnd}
               >
-                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+                <video
+                  ref={videoRef}
+                  src={`/api/stream?file=${encodeURIComponent(results.clips[showVideoEditor].path)}`}
+                  className="w-full h-full object-contain"
+                  controls
+                  onTimeUpdate={(e) => setCurrentVideoTime(e.currentTarget.currentTime)}
+                />
 
-              <div className="flex-1 flex flex-col items-center justify-center pr-8">
-                <div
-                  ref={containerRef}
-                  className="relative w-full max-w-[420px] aspect-[9/16] bg-black rounded-3xl overflow-hidden shadow-xl mb-4 flex items-center justify-center"
-                  style={{ touchAction: "none" }}
-                  onMouseMove={(e) => { if (showVideoEditor !== null) handleDragMove(e, showVideoEditor); }}
-                  onMouseUp={handleDragEnd}
-                  onMouseLeave={handleDragEnd}
-                  onTouchMove={(e) => { if (showVideoEditor !== null) handleDragMove(e, showVideoEditor); }}
-                  onTouchEnd={handleDragEnd}
-                >
-                  <video
-                    ref={videoRef}
-                    src={`/api/stream?file=${encodeURIComponent(results.clips[showVideoEditor].path)}`}
-                    className="w-full h-full object-contain"
-                    controls
-                    onTimeUpdate={(e) => setCurrentVideoTime(e.currentTarget.currentTime)}
-                  />
-
-                  {/* Display current subtitle - draggable */}
-                  {getCurrentSubtitle(showVideoEditor) && (
-                    <div
-                      className="absolute px-4 py-2 rounded-lg select-none"
-                      style={{
-                        left: `${subtitlePosition[showVideoEditor]?.x ?? 50}%`,
-                        top: `${subtitlePosition[showVideoEditor]?.y ?? 85}%`,
-                        transform: "translate(-50%, -50%)",
-                        cursor: isDragging ? "grabbing" : "grab",
-                        background: "rgba(0,0,0,0.7)",
-                        color: videoEdits[showVideoEditor]?.subtitleStyle?.color || "#fff",
-                        fontSize: videoEdits[showVideoEditor]?.subtitleStyle?.fontSize || 24,
-                        fontFamily: videoEdits[showVideoEditor]?.subtitleStyle?.fontFamily || "Arial",
-                        fontWeight: videoEdits[showVideoEditor]?.subtitleStyle?.fontWeight || "normal",
-                        fontStyle: videoEdits[showVideoEditor]?.subtitleStyle?.fontStyle || "normal",
-                        textShadow: "0 2px 8px #000",
-                        whiteSpace: "pre-line",
-                        textAlign: "center",
-                        maxWidth: "90%",
-                        animation:
-                          videoEdits[showVideoEditor]?.subtitleStyle?.animation === "fade in"
-                            ? "fadeIn 1s"
-                            : videoEdits[showVideoEditor]?.subtitleStyle?.animation === "slide up"
-                              ? "slideUp 1s"
-                              : videoEdits[showVideoEditor]?.subtitleStyle?.animation === "pop in"
-                                ? "popIn 0.7s"
-                                : videoEdits[showVideoEditor]?.subtitleStyle?.animation === "bounce"
-                                  ? "bounce 1s"
-                                  : "none",
-                        zIndex: 10,
-                      }}
-                      onMouseDown={(e) => { if (showVideoEditor !== null) handleDragStart(e, showVideoEditor); }}
-                      onTouchStart={(e) => { if (showVideoEditor !== null) handleDragStart(e, showVideoEditor); }}
-                    >
-                      {getCurrentSubtitle(showVideoEditor)?.text}
-                    </div>
-                  )}
-                </div>
-                <p className="text-sm text-[#666]">Preview (9:16) - Drag subtitle to reposition</p>
-              </div>
-
-              <div className="w-full max-w-md flex flex-col space-y-6 overflow-y-auto max-h-[80vh]">
-                {/* Subtitles Section */}
-                <div className="bg-gray-100 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-[#222]">Subtitles</h3>
-                    <button
-                      onClick={() => { if (showVideoEditor !== null) addSubtitle(showVideoEditor); }}
-                      className="px-4 py-2 bg-[#7b2ff2] text-white rounded-lg hover:bg-[#6228d7] transition text-sm font-medium"
-                    >
-                      + Add Subtitle
-                    </button>
+                {/* Display current subtitle - draggable */}
+                {getCurrentSubtitle(showVideoEditor) && (
+                  <div
+                    className="absolute px-4 py-2 rounded-lg select-none"
+                    style={{
+                      left: `${subtitlePosition[showVideoEditor]?.x ?? 50}%`,
+                      top: `${subtitlePosition[showVideoEditor]?.y ?? 85}%`,
+                      transform: "translate(-50%, -50%)",
+                      cursor: isDragging ? "grabbing" : "grab",
+                      background: "rgba(0,0,0,0.7)",
+                      color: videoEdits[showVideoEditor]?.subtitleStyle?.color || "#fff",
+                      fontSize: videoEdits[showVideoEditor]?.subtitleStyle?.fontSize || 24,
+                      fontFamily: videoEdits[showVideoEditor]?.subtitleStyle?.fontFamily || "Arial",
+                      fontWeight: videoEdits[showVideoEditor]?.subtitleStyle?.fontWeight || "normal",
+                      fontStyle: videoEdits[showVideoEditor]?.subtitleStyle?.fontStyle || "normal",
+                      textShadow: "0 2px 8px #000",
+                      whiteSpace: "pre-line",
+                      textAlign: "center",
+                      maxWidth: "90%",
+                      animation:
+                        videoEdits[showVideoEditor]?.subtitleStyle?.animation === "fade in"
+                          ? "fadeIn 1s"
+                          : videoEdits[showVideoEditor]?.subtitleStyle?.animation === "slide up"
+                            ? "slideUp 1s"
+                            : videoEdits[showVideoEditor]?.subtitleStyle?.animation === "pop in"
+                              ? "popIn 0.7s"
+                              : videoEdits[showVideoEditor]?.subtitleStyle?.animation === "bounce"
+                                ? "bounce 1s"
+                                : "none",
+                      zIndex: 10,
+                    }}
+                    onMouseDown={(e) => { if (showVideoEditor !== null) handleDragStart(e, showVideoEditor); }}
+                    onTouchStart={(e) => { if (showVideoEditor !== null) handleDragStart(e, showVideoEditor); }}
+                  >
+                    {getCurrentSubtitle(showVideoEditor)?.text}
                   </div>
+                )}
+              </div>
+              <p className="text-sm text-[#666]">Preview (9:16) - Drag subtitle to reposition</p>
+            </div>
 
-                  <div className="space-y-4 max-h-[300px] overflow-y-auto">
-                    {(subtitles[showVideoEditor] || []).length === 0 ? (
-                      <p className="text-gray-500 text-sm text-center py-4">
-                        No subtitles added. Click &quot;Add Subtitle&quot; to create one.
-                      </p>
-                    ) : (
-                      (subtitles[showVideoEditor] || []).map((subtitle, index) => (
-                        <div key={subtitle.id} className="bg-white rounded-lg p-4 border border-gray-200">
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-medium text-gray-700">Subtitle {index + 1}</span>
-                            <button
-                              onClick={() => { if (showVideoEditor !== null) removeSubtitle(showVideoEditor, subtitle.id); }}
-                              className="text-red-500 hover:text-red-700 text-sm font-medium"
-                            >
-                              Remove
-                            </button>
-                          </div>
+            <div className="w-full max-w-md flex flex-col space-y-6 overflow-y-auto max-h-[80vh]">
+              {/* Subtitles Section */}
+              <div className="bg-gray-100 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-[#222]">Subtitles</h3>
+                  <button
+                    onClick={() => { if (showVideoEditor !== null) addSubtitle(showVideoEditor); }}
+                    className="px-4 py-2 bg-[#7b2ff2] text-white rounded-lg hover:bg-[#6228d7] transition text-sm font-medium"
+                  >
+                    + Add Subtitle
+                  </button>
+                </div>
 
-                          <div className="grid grid-cols-2 gap-3 mb-3">
-                            <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">Start Time (mm:ss)</label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-[#7b2ff2] focus:ring-1 focus:ring-[#7b2ff2] text-[#222] bg-white text-sm"
-                                value={subtitle.startTime}
-                                onChange={(e) => { if (showVideoEditor !== null) updateSubtitle(showVideoEditor, subtitle.id, 'startTime', e.target.value); }}
-                                placeholder="00:00"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">End Time (mm:ss)</label>
-                              <input
-                                type="text"
-                                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-[#7b2ff2] focus:ring-1 focus:ring-[#7b2ff2] text-[#222] bg-white text-sm"
-                                value={subtitle.endTime}
-                                onChange={(e) => updateSubtitle(showVideoEditor, subtitle.id, 'endTime', e.target.value)}
-                                placeholder="00:03"
-                              />
-                            </div>
-                          </div>
+                <div className="space-y-4 max-h-[300px] overflow-y-auto">
+                  {(subtitles[showVideoEditor] || []).length === 0 ? (
+                    <p className="text-gray-500 text-sm text-center py-4">
+                      No subtitles added. Click &quot;Add Subtitle&quot; to create one.
+                    </p>
+                  ) : (
+                    (subtitles[showVideoEditor] || []).map((subtitle, index) => (
+                      <div key={subtitle.id} className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-medium text-gray-700">Subtitle {index + 1}</span>
+                          <button
+                            onClick={() => { if (showVideoEditor !== null) removeSubtitle(showVideoEditor, subtitle.id); }}
+                            className="text-red-500 hover:text-red-700 text-sm font-medium"
+                          >
+                            Remove
+                          </button>
+                        </div>
 
+                        <div className="grid grid-cols-2 gap-3 mb-3">
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Text</label>
-                            <textarea
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Start Time (mm:ss)</label>
+                            <input
+                              type="text"
                               className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-[#7b2ff2] focus:ring-1 focus:ring-[#7b2ff2] text-[#222] bg-white text-sm"
-                              rows={2}
-                              value={subtitle.text}
-                              onChange={(e) => updateSubtitle(showVideoEditor, subtitle.id, 'text', e.target.value)}
-                              placeholder="Enter subtitle text..."
+                              value={subtitle.startTime}
+                              onChange={(e) => { if (showVideoEditor !== null) updateSubtitle(showVideoEditor, subtitle.id, 'startTime', e.target.value); }}
+                              placeholder="00:00"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">End Time (mm:ss)</label>
+                            <input
+                              type="text"
+                              className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-[#7b2ff2] focus:ring-1 focus:ring-[#7b2ff2] text-[#222] bg-white text-sm"
+                              value={subtitle.endTime}
+                              onChange={(e) => updateSubtitle(showVideoEditor, subtitle.id, 'endTime', e.target.value)}
+                              placeholder="00:03"
                             />
                           </div>
                         </div>
-                      ))
-                    )}
-                  </div>
-                </div>
 
-                {/* Font Style Section */}
-                <div className="bg-gray-100 rounded-xl p-4">
-                  <h3 className="text-lg font-semibold text-[#222] mb-4">Subtitle Style</h3>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-[#222] mb-2">Font Size</label>
-                        <input
-                          type="number"
-                          className="w-full px-4 py-2 rounded-lg border border-gray-400 text-[#222] bg-white"
-                          value={videoEdits[showVideoEditor]?.subtitleStyle?.fontSize || 24}
-                          onChange={(e) =>
-                            handleVideoEdit(showVideoEditor, {
-                              ...videoEdits[showVideoEditor],
-                              subtitleStyle: {
-                                ...videoEdits[showVideoEditor]?.subtitleStyle,
-                                fontSize: parseInt(e.target.value),
-                              },
-                            })
-                          }
-                        />
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Text</label>
+                          <textarea
+                            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-[#7b2ff2] focus:ring-1 focus:ring-[#7b2ff2] text-[#222] bg-white text-sm"
+                            rows={2}
+                            value={subtitle.text}
+                            onChange={(e) => updateSubtitle(showVideoEditor, subtitle.id, 'text', e.target.value)}
+                            placeholder="Enter subtitle text..."
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-[#222] mb-2">Font Color</label>
-                        <input
-                          type="color"
-                          className="w-full h-10 rounded-lg border border-gray-400"
-                          value={videoEdits[showVideoEditor]?.subtitleStyle?.color || "#ffffff"}
-                          onChange={(e) =>
-                            handleVideoEdit(showVideoEditor, {
-                              ...videoEdits[showVideoEditor],
-                              subtitleStyle: {
-                                ...videoEdits[showVideoEditor]?.subtitleStyle,
-                                color: e.target.value,
-                              },
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Font Style Section */}
+              <div className="bg-gray-100 rounded-xl p-4">
+                <h3 className="text-lg font-semibold text-[#222] mb-4">Subtitle Style</h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-[#222] mb-2">Font Family</label>
-                      <select
+                      <label className="block text-sm font-medium text-[#222] mb-2">Font Size</label>
+                      <input
+                        type="number"
                         className="w-full px-4 py-2 rounded-lg border border-gray-400 text-[#222] bg-white"
-                        value={videoEdits[showVideoEditor]?.subtitleStyle?.fontFamily || "Arial"}
+                        value={videoEdits[showVideoEditor]?.subtitleStyle?.fontSize || 24}
                         onChange={(e) =>
                           handleVideoEdit(showVideoEditor, {
                             ...videoEdits[showVideoEditor],
                             subtitleStyle: {
                               ...videoEdits[showVideoEditor]?.subtitleStyle,
-                              fontFamily: e.target.value,
+                              fontSize: parseInt(e.target.value),
                             },
                           })
                         }
-                      >
-                        <option value="Arial">Arial</option>
-                        <option value="Helvetica">Helvetica</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Courier New">Courier New</option>
-                      </select>
+                      />
                     </div>
-                    <div className="flex gap-4">
-                      <button
-                        className={`flex-1 px-4 py-2 rounded-lg border ${videoEdits[showVideoEditor]?.subtitleStyle?.fontWeight === "bold"
-                          ? "bg-[#7b2ff2] text-white"
-                          : "border-gray-400 text-[#222] bg-white"
-                          }`}
-                        onClick={() =>
+                    <div>
+                      <label className="block text-sm font-medium text-[#222] mb-2">Font Color</label>
+                      <input
+                        type="color"
+                        className="w-full h-10 rounded-lg border border-gray-400"
+                        value={videoEdits[showVideoEditor]?.subtitleStyle?.color || "#ffffff"}
+                        onChange={(e) =>
                           handleVideoEdit(showVideoEditor, {
                             ...videoEdits[showVideoEditor],
                             subtitleStyle: {
                               ...videoEdits[showVideoEditor]?.subtitleStyle,
-                              fontWeight:
-                                videoEdits[showVideoEditor]?.subtitleStyle?.fontWeight === "bold"
-                                  ? "normal"
-                                  : "bold",
+                              color: e.target.value,
                             },
                           })
                         }
-                      >
-                        Bold
-                      </button>
-                      <button
-                        className={`flex-1 px-4 py-2 rounded-lg border ${videoEdits[showVideoEditor]?.subtitleStyle?.fontStyle === "italic"
-                          ? "bg-[#7b2ff2] text-white"
-                          : "border-gray-400 text-[#222] bg-white"
-                          }`}
-                        onClick={() =>
-                          handleVideoEdit(showVideoEditor, {
-                            ...videoEdits[showVideoEditor],
-                            subtitleStyle: {
-                              ...videoEdits[showVideoEditor]?.subtitleStyle,
-                              fontStyle:
-                                videoEdits[showVideoEditor]?.subtitleStyle?.fontStyle === "italic"
-                                  ? "normal"
-                                  : "italic",
-                            },
-                          })
-                        }
-                      >
-                        Italic
-                      </button>
+                      />
                     </div>
                   </div>
-                </div>
-
-                {/* Animations Section */}
-                <div className="bg-gray-100 rounded-xl p-4">
-                  <h3 className="text-lg font-semibold text-[#222] mb-4">Animations</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {["Fade In", "Slide Up", "Pop In", "Bounce"].map((animation) => (
-                      <button
-                        key={animation}
-                        className={`px-4 py-2 rounded-lg border ${videoEdits[showVideoEditor]?.subtitleStyle?.animation === animation.toLowerCase()
-                          ? "bg-[#7b2ff2] text-white"
-                          : "border-gray-400 text-[#222] bg-white"
-                          } transition`}
-                        onClick={() =>
-                          handleVideoEdit(showVideoEditor, {
-                            ...videoEdits[showVideoEditor],
-                            subtitleStyle: {
-                              ...videoEdits[showVideoEditor]?.subtitleStyle,
-                              animation:
-                                videoEdits[showVideoEditor]?.subtitleStyle?.animation === animation.toLowerCase()
-                                  ? "none"
-                                  : animation.toLowerCase(),
-                            },
-                          })
-                        }
-                      >
-                        {animation}
-                      </button>
-                    ))}
+                  <div>
+                    <label className="block text-sm font-medium text-[#222] mb-2">Font Family</label>
+                    <select
+                      className="w-full px-4 py-2 rounded-lg border border-gray-400 text-[#222] bg-white"
+                      value={videoEdits[showVideoEditor]?.subtitleStyle?.fontFamily || "Arial"}
+                      onChange={(e) =>
+                        handleVideoEdit(showVideoEditor, {
+                          ...videoEdits[showVideoEditor],
+                          subtitleStyle: {
+                            ...videoEdits[showVideoEditor]?.subtitleStyle,
+                            fontFamily: e.target.value,
+                          },
+                        })
+                      }
+                    >
+                      <option value="Arial">Arial</option>
+                      <option value="Helvetica">Helvetica</option>
+                      <option value="Times New Roman">Times New Roman</option>
+                      <option value="Courier New">Courier New</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-4">
+                    <button
+                      className={`flex-1 px-4 py-2 rounded-lg border ${videoEdits[showVideoEditor]?.subtitleStyle?.fontWeight === "bold"
+                        ? "bg-[#7b2ff2] text-white"
+                        : "border-gray-400 text-[#222] bg-white"
+                        }`}
+                      onClick={() =>
+                        handleVideoEdit(showVideoEditor, {
+                          ...videoEdits[showVideoEditor],
+                          subtitleStyle: {
+                            ...videoEdits[showVideoEditor]?.subtitleStyle,
+                            fontWeight:
+                              videoEdits[showVideoEditor]?.subtitleStyle?.fontWeight === "bold"
+                                ? "normal"
+                                : "bold",
+                          },
+                        })
+                      }
+                    >
+                      Bold
+                    </button>
+                    <button
+                      className={`flex-1 px-4 py-2 rounded-lg border ${videoEdits[showVideoEditor]?.subtitleStyle?.fontStyle === "italic"
+                        ? "bg-[#7b2ff2] text-white"
+                        : "border-gray-400 text-[#222] bg-white"
+                        }`}
+                      onClick={() =>
+                        handleVideoEdit(showVideoEditor, {
+                          ...videoEdits[showVideoEditor],
+                          subtitleStyle: {
+                            ...videoEdits[showVideoEditor]?.subtitleStyle,
+                            fontStyle:
+                              videoEdits[showVideoEditor]?.subtitleStyle?.fontStyle === "italic"
+                                ? "normal"
+                                : "italic",
+                          },
+                        })
+                      }
+                    >
+                      Italic
+                    </button>
                   </div>
                 </div>
+              </div>
 
-                <div className="mt-8 flex flex-row items-center justify-end space-x-4 w-full">
-                  <button
-                    onClick={() => { if (showVideoEditor !== null) saveVideoEdits(showVideoEditor); }}
-                    disabled={savingClipIndex === showVideoEditor}
-                    className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 ${savingClipIndex === showVideoEditor
-                      ? 'bg-gray-400 text-white cursor-not-allowed'
-                      : 'bg-[#7b2ff2] text-white hover:bg-[#6228d7]'
-                      }`}
-                  >
-                    {savingClipIndex === showVideoEditor ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Saving...
-                      </>
-                    ) : (
-                      'Save Changes'
-                    )}
-                  </button>
+              {/* Animations Section */}
+              <div className="bg-gray-100 rounded-xl p-4">
+                <h3 className="text-lg font-semibold text-[#222] mb-4">Animations</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {["Fade In", "Slide Up", "Pop In", "Bounce"].map((animation) => (
+                    <button
+                      key={animation}
+                      className={`px-4 py-2 rounded-lg border ${videoEdits[showVideoEditor]?.subtitleStyle?.animation === animation.toLowerCase()
+                        ? "bg-[#7b2ff2] text-white"
+                        : "border-gray-400 text-[#222] bg-white"
+                        } transition`}
+                      onClick={() =>
+                        handleVideoEdit(showVideoEditor, {
+                          ...videoEdits[showVideoEditor],
+                          subtitleStyle: {
+                            ...videoEdits[showVideoEditor]?.subtitleStyle,
+                            animation:
+                              videoEdits[showVideoEditor]?.subtitleStyle?.animation === animation.toLowerCase()
+                                ? "none"
+                                : animation.toLowerCase(),
+                          },
+                        })
+                      }
+                    >
+                      {animation}
+                    </button>
+                  ))}
                 </div>
+              </div>
+
+              <div className="mt-8 flex flex-row items-center justify-end space-x-4 w-full">
+                <button
+                  onClick={() => { if (showVideoEditor !== null) saveVideoEdits(showVideoEditor); }}
+                  disabled={savingClipIndex === showVideoEditor}
+                  className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 ${savingClipIndex === showVideoEditor
+                    ? 'bg-gray-400 text-white cursor-not-allowed'
+                    : 'bg-[#7b2ff2] text-white hover:bg-[#6228d7]'
+                    }`}
+                >
+                  {savingClipIndex === showVideoEditor ? (
+                    <>
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </button>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Floating Feedback Button */}
-        <button
-          onClick={() => setFeedbackOpen(true)}
-          className="fixed bottom-6 right-6 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-40 flex items-center gap-2"
-          title="Share Feedback"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          <span className="font-medium">Feedback</span>
-        </button>
+      {/* Floating Feedback Button */}
+      <button
+        onClick={() => setFeedbackOpen(true)}
+        className="fixed bottom-6 right-6 bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 z-[90] flex items-center gap-2"
+        title="Share Feedback"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+        <span className="font-medium">Feedback</span>
+      </button>
 
-        {/* Feedback Modal */}
-        {feedbackOpen && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4">
-              {feedbackSubmitted ? (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Thank You!</h3>
-                  <p className="text-gray-600">Your feedback has been submitted successfully.</p>
+      {/* Feedback Modal */}
+      {feedbackOpen && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4">
+            {feedbackSubmitted ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-semibold text-gray-900">Share Your Feedback</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Thank You!</h3>
+                <p className="text-gray-600">Your feedback has been submitted successfully.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-gray-900">Share Your Feedback</h3>
+                  <button
+                    onClick={() => setFeedbackOpen(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <form onSubmit={handleFeedbackSubmit} className="space-y-4">
+                  {/* Feedback */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      What did you think of the results?
+                    </label>
+                    <textarea
+                      value={feedbackForm.feedback}
+                      onChange={(e) => handleFeedbackChange('feedback', e.target.value)}
+                      placeholder="Tell us about your experience..."
+                      className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Email (required) */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={feedbackForm.email}
+                      onChange={(e) => handleFeedbackChange('email', e.target.value)}
+                      placeholder="your@email.com"
+                      required
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                    />
+                  </div>
+
+                  {/* Suggestions */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Suggestions for improvement
+                    </label>
+                    <textarea
+                      value={feedbackForm.suggestions}
+                      onChange={(e) => handleFeedbackChange('suggestions', e.target.value)}
+                      placeholder="Any ideas to make this better?"
+                      className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                      rows={2}
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="flex gap-3 pt-4">
                     <button
+                      type="button"
                       onClick={() => setFeedbackOpen(false)}
-                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                      className="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      Submit Feedback
                     </button>
                   </div>
-
-                  <form onSubmit={handleFeedbackSubmit} className="space-y-4">
-                    {/* Feedback */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        What did you think of the results?
-                      </label>
-                      <textarea
-                        value={feedbackForm.feedback}
-                        onChange={(e) => handleFeedbackChange('feedback', e.target.value)}
-                        placeholder="Tell us about your experience..."
-                        className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-                        rows={3}
-                      />
-                    </div>
-
-                    {/* Email (required) */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        value={feedbackForm.email}
-                        onChange={(e) => handleFeedbackChange('email', e.target.value)}
-                        placeholder="your@email.com"
-                        required
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-                      />
-                    </div>
-
-                    {/* Suggestions */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Suggestions for improvement
-                      </label>
-                      <textarea
-                        value={feedbackForm.suggestions}
-                        onChange={(e) => handleFeedbackChange('suggestions', e.target.value)}
-                        placeholder="Any ideas to make this better?"
-                        className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-                        rows={2}
-                      />
-                    </div>
-
-                    {/* Submit Button */}
-                    <div className="flex gap-3 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => setFeedbackOpen(false)}
-                        className="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                      >
-                        Submit Feedback
-                      </button>
-                    </div>
-                  </form>
-                </>
-              )}
-            </div>
+                </form>
+              </>
+            )}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Login popup */}
-        <LoginGate open={loginOpen} onClose={() => setLoginOpen(false)} />
-      </div>
+      {/* Login popup */}
+      <LoginGate open={loginOpen} onClose={() => setLoginOpen(false)} />
     </div>
   );
 }
