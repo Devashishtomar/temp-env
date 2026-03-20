@@ -16,6 +16,7 @@ export default function TopNav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Get login context if available, otherwise use local state
@@ -49,9 +50,14 @@ export default function TopNav() {
     }
   };
 
-  // Handle logout
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
     setProfileDropdownOpen(false);
+    setMenuOpen(false);
+    setShowLogoutModal(true);
+  };
+
+  const executeLogout = () => {
+    setShowLogoutModal(false);
     const isResultsPage = window.location.pathname === '/results';
     if (isResultsPage) {
       try {
@@ -88,7 +94,7 @@ export default function TopNav() {
   // Handle login button click for mobile
   const handleLoginClick = () => {
     if (status === "authenticated") {
-      handleLogout();
+      handleLogoutClick();
     } else {
       try {
         sessionStorage.setItem("evr.returnTo.v1", window.location.pathname + window.location.search + window.location.hash);
@@ -197,7 +203,7 @@ export default function TopNav() {
                     </button>
 
                     <button
-                      onClick={handleLogout}
+                      onClick={handleLogoutClick}
                       className="w-full text-left px-4 py-3 text-red-400 hover:bg-white/10 transition flex items-center gap-3"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,6 +307,30 @@ export default function TopNav() {
 
       {/* Feedback Modal - rendered outside header for proper positioning */}
       <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+
+      {/* Custom Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#1a1f2e] border border-white/10 rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-xl font-bold text-white mb-2">Confirm Logout</h3>
+            <p className="text-gray-400 mb-6">Are you sure you want to log out of your account?</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="px-4 py-2 rounded-xl text-gray-300 hover:bg-white/10 transition font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeLogout}
+                className="px-4 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition border border-red-500/20 font-medium shadow-lg shadow-red-500/10"
+              >
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

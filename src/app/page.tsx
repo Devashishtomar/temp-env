@@ -1,7 +1,28 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Upload, Sparkles, User, ArrowRight } from "lucide-react";
+import { useEffect, Suspense } from "react";
+import { useSnackbar } from "@/providers/SnackbarProvider"; // Import your custom hook!
+
+
+function AuthErrorHandler() {
+  const searchParams = useSearchParams();
+  const { error } = useSnackbar(); // Destructure the error function from your provider
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam === "EmailAccountExists") {
+      // Trigger your beautiful Snackbar instead of an alert
+      error("An account with this email already exists. Please log in with your password.");
+
+      // Clean up the URL so the error doesn't stay there if they refresh
+      window.history.replaceState(null, "", "/");
+    }
+  }, [searchParams, error]); // Added error to dependency array
+
+  return null; // This component doesn't render any HTML itself
+}
 
 export default function HomePage() {
   const router = useRouter();
@@ -12,6 +33,10 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#0b0f1a] text-white overflow-hidden">
+      <Suspense fallback={null}>
+        <AuthErrorHandler />
+      </Suspense>
+
       {/* Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] animate-pulse" />
@@ -27,7 +52,7 @@ export default function HomePage() {
               AI-Powered Video Intelligence
             </span>
           </div>
-          
+
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 leading-[1.1] tracking-tight">
             <span className="bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent">
               The Future of Video
@@ -37,11 +62,11 @@ export default function HomePage() {
               Creation & Editing
             </span>
           </h1>
-          
+
           <p className="text-lg md:text-xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed">
             Transform your long videos into viral short-form content with AI-powered clip detection and intelligent editing
           </p>
-          
+
           <button
             onClick={handleTryNow}
             className="group relative px-10 py-5 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-semibold text-lg rounded-2xl transition-all duration-500 shadow-[0_0_40px_rgba(147,51,234,0.3)] hover:shadow-[0_0_60px_rgba(147,51,234,0.5)] hover:scale-105 overflow-hidden"
