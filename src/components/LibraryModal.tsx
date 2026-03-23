@@ -54,7 +54,14 @@ export default function LibraryModal({ isOpen, onClose, onSelect }: LibraryModal
       .catch((err: any) => {
         console.error("Library fetch error:", err);
         if (!mounted) return;
-        setError(String(err?.message ?? err));
+
+        const rawError = String(err?.message ?? err).toLowerCase();
+
+        if (rawError.includes("unauthenticated") || rawError.includes("401") || rawError.includes("login")) {
+          setError("Please log in to view and select videos from your library.");
+        } else {
+          setError("We are currently facing issues loading your library. Please try again later.");
+        }
       })
       .finally(() => {
         if (!mounted) return;
@@ -151,7 +158,13 @@ export default function LibraryModal({ isOpen, onClose, onSelect }: LibraryModal
               <div className="text-gray-400">Loading library…</div>
             </div>
           ) : error ? (
-            <div className="text-red-400 p-4">{error}</div>
+            <div className="flex flex-col items-center justify-center h-64 text-center px-4">
+              <svg className="w-12 h-12 text-red-500/50 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <p className="text-sm font-medium text-red-400 mb-1">Unable to load library</p>
+              <p className="text-xs text-gray-400">{error}</p>
+            </div>
           ) : videos.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-gray-400">
               <p className="text-sm">No videos in your library</p>
