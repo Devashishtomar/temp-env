@@ -240,14 +240,26 @@ export default function UploadArea({ onProcessing, platform, aiModel }: UploadAr
     <div className="w-full">
       {/* Processing Modal */}
       {isProcessing && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center backdrop-blur-sm p-4">
           <div className="bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl p-8 flex flex-col items-center w-full max-w-sm border border-purple-500/30">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-500 rounded-full flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-purple-500/20">
               <svg className="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </div>
-            <div className="text-xl font-bold text-white mb-3">Processing Your Video</div>
+
+            {/* Dynamic Title based on whether they uploaded a file or pasted a link */}
+            <div className="text-xl font-bold text-white mb-3 text-center">
+              {selectedFile ? "Uploading & Processing..." : "Processing Your Video"}
+            </div>
+
+            {/* Helpful warning message for local uploads */}
+            {selectedFile && (
+              <p className="text-sm text-gray-400 text-center font-medium leading-relaxed">
+                Please wait while your file uploads securely to our servers. <br />
+                <span className="text-purple-400 mt-1 block">This may take a few minutes on slower connections. Do not close this window.</span>
+              </p>
+            )}
           </div>
         </div>
       )}
