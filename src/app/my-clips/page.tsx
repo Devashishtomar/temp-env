@@ -94,6 +94,24 @@ export default function MyClipsPage() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const subtitleIdCounter = useRef(0);
+
+  // --- NEW UI STATES ---
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Helper to replace raw DOM manipulation with clean toasts
+  const showToast = (msg: string, type: 'success' | 'error') => {
+    const message = document.createElement("div");
+    message.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-[200] font-semibold text-white transition-opacity ${type === 'success' ? 'bg-green-500' : 'bg-red-500'
+      }`;
+    message.textContent = msg;
+    document.body.appendChild(message);
+    setTimeout(() => {
+      if (document.body.contains(message)) document.body.removeChild(message);
+    }, 4000);
+  };
+
   // Helper function to detect view mode from filename or file path
   const detectViewModeFromFilename = (filename: string, filePath?: string): 'portrait' | 'landscape' => {
     const lowerFilename = filename.toLowerCase();
@@ -187,6 +205,7 @@ export default function MyClipsPage() {
   };
 
   const addSubtitle = (clipId: number) => {
+    setHasUnsavedChanges(true);
     const newSubtitle: Subtitle = {
       id: subtitleIdCounter.current++,
       startTime: '00:00',
@@ -200,6 +219,7 @@ export default function MyClipsPage() {
   };
 
   const removeSubtitle = (clipId: number, subtitleId: number) => {
+    setHasUnsavedChanges(true);
     setSubtitles((prev) => ({
       ...prev,
       [clipId]: (prev[clipId] || []).filter((s) => s.id !== subtitleId),
@@ -207,6 +227,7 @@ export default function MyClipsPage() {
   };
 
   const updateSubtitle = (clipId: number, subtitleId: number, field: keyof Subtitle, value: string) => {
+    setHasUnsavedChanges(true);
     setSubtitles((prev) => ({
       ...prev,
       [clipId]: (prev[clipId] || []).map((s) =>
@@ -269,9 +290,11 @@ export default function MyClipsPage() {
 
   const handleDragEnd = () => {
     setIsDragging(false);
+    setHasUnsavedChanges(true);
   };
 
   const handleVideoEdit = (clipId: number, edits: any) => {
+    setHasUnsavedChanges(true);
     setVideoEdits((prev) => ({
       ...prev,
       [clipId]: edits,
@@ -280,6 +303,7 @@ export default function MyClipsPage() {
 
   const handleVideoEditorClose = () => {
     setShowVideoEditor(null);
+    setHasUnsavedChanges(false);
   };
 
 
@@ -809,7 +833,10 @@ export default function MyClipsPage() {
               style={{ minHeight: 600 }}
             >
               <button
-                onClick={() => setShowVideoEditor(null)}
+                onClick={() => {
+                  if (hasUnsavedChanges) setShowCloseConfirm(true);
+                  else handleVideoEditorClose();
+                }}
                 className="absolute top-4 right-4 p-2 bg-gray-200 rounded-full hover:bg-gray-300 z-50"
               >
                 <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -1043,28 +1070,94 @@ export default function MyClipsPage() {
                   </div>
                 </div>
 
-                <div className="mt-8 flex flex-row items-center justify-end space-x-4 w-full">
-                  <button
-                    onClick={() => saveVideoEdits(showVideoEditor)}
-                    disabled={savingClipId === showVideoEditor}
-                    className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 ${savingClipId === showVideoEditor
-                      ? 'bg-gray-400 text-white cursor-not-allowed'
-                      : 'bg-[#7b2ff2] text-white hover:bg-[#6228d7]'
-                      }`}
-                  >
-                    {savingClipId === showVideoEditor ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Saving...
-                      </>
-                    ) : (
-                      'Save Changes'
-                    )}
-                  </button>
+                <div className="mt-8 flex flex-col w-full space-y-4">
+                  {/* Permanent Change Warning */}
+                  <div className="p-4 bg-blue-50/50 border border-blue-200 rounded-xl flex items-start gap-3">
+                    <svg className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-sm text-blue-800 leading-relaxed">
+                      <strong>Important:</strong> You can only edit a video once. Once you save these changes, subtitles and styling will be permanently embedded into the video and cannot be altered later.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-row items-center justify-end space-x-4 w-full">
+                    <button
+                      onClick={() => setShowSaveConfirm(true)}
+                      disabled={savingClipId === showVideoEditor}
+                      className={`px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2 ${savingClipId === showVideoEditor
+                        ? 'bg-gray-400 text-white cursor-not-allowed'
+                        : 'bg-[#7b2ff2] text-white hover:bg-[#6228d7]'
+                        }`}
+                    >
+                      {savingClipId === showVideoEditor ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Saving...
+                        </>
+                      ) : (
+                        'Save Changes'
+                      )}
+                    </button>
+                  </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Close Confirmation Modal */}
+        {showCloseConfirm && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Unsaved Changes</h3>
+              <p className="text-gray-600 mb-6 text-sm leading-relaxed">You have unsaved edits. Are you sure you want to close? Your changes will be discarded.</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowCloseConfirm(false)}
+                  className="px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100 transition font-medium text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCloseConfirm(false);
+                    handleVideoEditorClose();
+                  }}
+                  className="px-4 py-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition font-medium text-sm"
+                >
+                  Discard Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Save Confirmation Modal */}
+        {showSaveConfirm && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Confirm Save</h3>
+              <p className="text-gray-600 mb-6 text-sm leading-relaxed">Are you sure you want to save these edits? Once saved, subtitles are permanently burned into the video and cannot be changed.</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowSaveConfirm(false)}
+                  className="px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100 transition font-medium text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSaveConfirm(false);
+                    if (showVideoEditor !== null) saveVideoEdits(showVideoEditor);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-[#7b2ff2] text-white hover:bg-[#6228d7] transition font-medium text-sm"
+                >
+                  Yes, Save Edits
+                </button>
               </div>
             </div>
           </div>
