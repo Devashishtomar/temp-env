@@ -48,6 +48,23 @@ export default function UploadArea({ onProcessing, platform, aiModel }: UploadAr
     }
   }, [isProcessing]);
 
+
+  // Check if a user clicked "Use" from the Library page
+  useEffect(() => {
+    const useId = sessionStorage.getItem("evr.useLibraryId");
+    const useName = sessionStorage.getItem("evr.useLibraryName");
+
+    if (useId && useName) {
+      // Set the video in the upload area
+      setLibraryVideoId(useId);
+      setLibraryVideoName(useName);
+
+      // Clean up the memory so it doesn't get stuck in a loop if they refresh
+      sessionStorage.removeItem("evr.useLibraryId");
+      sessionStorage.removeItem("evr.useLibraryName");
+    }
+  }, []);
+
   // Auto-clear: When file is selected, clear URL and library
   useEffect(() => {
     if (selectedFile) {

@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import LoginGate from "@/components/LoginGate";
 import AccountLayout from "@/components/AccountLayout";
+import { useSnackbar } from "@/providers/SnackbarProvider";
 
 interface LibraryFile {
   id: string;
@@ -24,11 +25,12 @@ interface ApiListResponse {
 
 type ViewMode = "grid" | "list";
 
-const MAX_CLIENT_UPLOAD_BYTES = 500 * 1024 * 1024; // 500MB client-side hint (backend enforces real limit)
+const MAX_CLIENT_UPLOAD_BYTES = 1024 * 1024 * 1024; // 1GB client-side hint (backend enforces real limit)
 
 export default function LibraryPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const snackbar = useSnackbar();
 
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [files, setFiles] = useState<LibraryFile[]>([]);
@@ -37,6 +39,9 @@ export default function LibraryPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState<Record<string, number>>({}); // fileId -> percent
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const [fileToDelete, setFileToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -94,37 +99,48 @@ export default function LibraryPage() {
     inputRef.current?.click();
   }
 
-  // delete
-  async function handleDelete(fileId: string) {
-    if (!confirm("Delete this file from your library? This will free up storage.")) return;
+  // Custom delete execution
+  async function executeDelete() {
+    if (!fileToDelete) return;
+    setIsDeleting(true);
     try {
-      const res = await fetch(`/api/library?id=${encodeURIComponent(fileId)}`, { method: "DELETE", credentials: "include" });
+      const res = await fetch(`/api/library?id=${encodeURIComponent(fileToDelete)}`, { method: "DELETE", credentials: "include" });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(body?.error || "Failed to delete");
-        return;
+        snackbar.error(body?.error || "Failed to delete file.");
+      } else {
+        snackbar.success("File deleted successfully!");
+        fetchLibrary();
       }
-      // refresh
-      fetchLibrary();
     } catch (err) {
       console.error("delete error", err);
-      alert("Delete failed");
+      snackbar.error("Delete failed due to a network error.");
+    } finally {
+      setIsDeleting(false);
+      setFileToDelete(null);
     }
   }
 
-  // upload with progress using XMLHttpRequest so we can display progress
+
+  // Handle "Use" button click
+  function handleUse(fileId: string, filename: string) {
+    sessionStorage.setItem("evr.useLibraryId", fileId);
+    sessionStorage.setItem("evr.useLibraryName", filename);
+    router.push("/features"); 
+  }
+
+  // Upload handler with 1GB limit check
   function uploadFiles(list: File[]) {
-    // filter client-side allowed types
     const videos = list.filter((f) => f.type.startsWith("video/"));
     if (videos.length === 0) {
-      alert("Only video files are allowed.");
+      snackbar.error("Only video files are allowed.");
       return;
     }
 
     for (const file of videos) {
       if (file.size > MAX_CLIENT_UPLOAD_BYTES) {
-        const ok = confirm(`${file.name} is larger than ${formatBytes(MAX_CLIENT_UPLOAD_BYTES)} (client limit). Try upload anyway?`);
-        if (!ok) continue;
+        snackbar.error(`${file.name} is larger than 1GB. Please upload a smaller file.`);
+        continue;
       }
       doUpload(file);
     }
@@ -139,7 +155,7 @@ export default function LibraryPage() {
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/library", true);
-    xhr.withCredentials = true; // ensure cookies are sent
+    xhr.withCredentials = true;
 
     xhr.upload.onprogress = (evt) => {
       if (!evt.lengthComputable) return;
@@ -148,29 +164,22 @@ export default function LibraryPage() {
     };
 
     xhr.onload = async () => {
+      setUploading((s) => {
+        const copy = { ...s };
+        delete copy[tempId];
+        return copy;
+      });
+
       if (xhr.status >= 200 && xhr.status < 300) {
-        // success
-        setUploading((s) => {
-          const copy = { ...s };
-          delete copy[tempId];
-          return copy;
-        });
-        try {
-          await fetchLibrary();
-        } catch { }
+        snackbar.success("Video uploaded successfully!");
+        try { await fetchLibrary(); } catch { }
       } else {
-        // failure
-        setUploading((s) => {
-          const copy = { ...s };
-          delete copy[tempId];
-          return copy;
-        });
         let msg = "Upload failed";
         try {
           const json = JSON.parse(xhr.responseText);
           msg = json?.error || msg;
         } catch { }
-        alert(msg);
+        snackbar.error(msg);
       }
     };
 
@@ -180,7 +189,7 @@ export default function LibraryPage() {
         delete copy[tempId];
         return copy;
       });
-      alert("Upload failed (network error)");
+      snackbar.error("Upload failed due to a network error.");
     };
 
     xhr.send(form);
@@ -333,10 +342,14 @@ export default function LibraryPage() {
                       <div className="flex items-center justify-between mt-2">
                         <span className="text-xs text-gray-500">{formatBytes(f.size_bytes)}</span>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Use in editor">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleUse(f.id, f.filename); }}
+                            className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            title="Use in editor"
+                          >
                             Use
                           </button>
-                          <button onClick={() => handleDelete(f.id)} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                          <button onClick={() => setFileToDelete(f.id)} className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
                             Delete
                           </button>
                         </div>
@@ -366,7 +379,7 @@ export default function LibraryPage() {
                       <button className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="Use in editor">
                         Use
                       </button>
-                      <button onClick={() => handleDelete(f.id)} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                      <button onClick={() => setFileToDelete(f.id)} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
                         Delete
                       </button>
                     </div>
@@ -378,7 +391,35 @@ export default function LibraryPage() {
 
         </div>
       </div>
-    </AccountLayout>
+
+      {/* Custom Delete Confirmation Modal */}
+      {
+        fileToDelete && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Video</h3>
+              <p className="text-gray-600 mb-6 text-sm leading-relaxed">Are you sure you want to delete this file from your library? This will free up storage space, but it cannot be undone.</p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setFileToDelete(null)}
+                  disabled={isDeleting}
+                  className="px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-100 transition font-medium text-sm disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition font-medium text-sm flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isDeleting ? "Deleting..." : "Yes, Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </AccountLayout >
   );
 
   // helper for duration
