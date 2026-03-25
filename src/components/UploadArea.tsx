@@ -65,6 +65,38 @@ export default function UploadArea({ onProcessing, platform, aiModel }: UploadAr
     }
   }, []);
 
+  // --- NEW: Restore Form Draft after Login ---
+  useEffect(() => {
+    try {
+      const draftStr = sessionStorage.getItem("evr.uploadDraft.v1");
+      if (draftStr) {
+        const draft = JSON.parse(draftStr);
+
+        if (draft.platform) setSelectedPlatform(draft.platform);
+        if (draft.aiModel) setSelectedAIModel(draft.aiModel);
+        if (draft.youtubeUrl) setYoutubeUrl(draft.youtubeUrl);
+        if (draft.minClipLength) setMinClipLength(draft.minClipLength);
+        if (draft.maxClipLength) setMaxClipLength(draft.maxClipLength);
+        if (draft.manualStart) setManualStart(draft.manualStart);
+        if (draft.manualEnd) setManualEnd(draft.manualEnd);
+        if (draft.keywords) setKeywords(draft.keywords);
+        if (draft.clipCount) setClipCount(draft.clipCount);
+        if (draft.libraryVideoId) setLibraryVideoId(draft.libraryVideoId);
+        if (draft.libraryVideoName) setLibraryVideoName(draft.libraryVideoName);
+
+        // If they had advanced settings saved, keep the menu open
+        if (draft.minClipLength || draft.maxClipLength || draft.manualStart || draft.manualEnd || draft.keywords || draft.clipCount) {
+          setShowAdvanced(true);
+        }
+
+        // Wipe the draft so it doesn't persist on normal page reloads
+        sessionStorage.removeItem("evr.uploadDraft.v1");
+      }
+    } catch (e) {
+      console.error("Error restoring upload draft:", e);
+    }
+  }, []);
+
   // Auto-clear: When file is selected, clear URL and library
   useEffect(() => {
     if (selectedFile) {
@@ -148,6 +180,25 @@ export default function UploadArea({ onProcessing, platform, aiModel }: UploadAr
       try {
         sessionStorage.setItem("evr.returnTo.v1", typeof window !== "undefined" ? window.location.href : "/");
         sessionStorage.setItem("evr.shouldRedirect.v1", "true");
+
+        const draft = {
+          platform: selectedPlatform,
+          aiModel: selectedAIModel,
+          youtubeUrl,
+          minClipLength,
+          maxClipLength,
+          manualStart,
+          manualEnd,
+          keywords,
+          clipCount,
+          libraryVideoId,
+          libraryVideoName,
+        };
+        sessionStorage.setItem("evr.uploadDraft.v1", JSON.stringify(draft));
+
+        if (selectedFile) {
+          snackbar.success("Please log in to continue. (Note: You will need to re-select your local file after logging in).");
+        }
       } catch (e) {
         console.error("Error setting session storage:", e);
       }
