@@ -681,8 +681,8 @@ async function cycleWarpConnection(): Promise<boolean> {
   console.log('[WARP] Attempting to cycle Cloudflare WARP connection for a fresh IP...');
   try {
     await execAsync('warp-cli disconnect');
-    console.log('[WARP] Disconnected. Waiting 2 seconds...');
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    console.log('[WARP] Disconnected. Waiting 15 seconds...');
+    await new Promise(resolve => setTimeout(resolve, 15000));
 
     await execAsync('warp-cli connect');
     console.log('[WARP] Connected. Waiting 10 seconds for tunnel to establish...');

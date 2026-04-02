@@ -485,7 +485,7 @@ export default function UploadArea({ onProcessing, platform, aiModel }: UploadAr
             >
               Instagram
             </button>
-            <button
+            {/*             <button
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${selectedPlatform === 'tiktok'
                 ? 'bg-black text-white shadow-lg shadow-black/25'
                 : 'bg-white/10 text-gray-300 hover:bg-white/20 border border-gray-600'
@@ -494,7 +494,7 @@ export default function UploadArea({ onProcessing, platform, aiModel }: UploadAr
               type="button"
             >
               TikTok
-            </button>
+            </button> */}
           </div>
         </div>
 
